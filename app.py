@@ -13,6 +13,16 @@ logging.basicConfig(filename='app.log', level=logging.INFO,
 
 
 st.markdown("<h1 style='text-align: center; color: #4B0082; font-family: cursive;'>Consumer Complaint Disputer 🗳️</h1>", unsafe_allow_html=True)
+st.warning(
+    """
+    We appreciate you utilizing our AI-driven customer dispute system.
+    Please be aware that the information you are giving is genuine and will be utilized to further refine the model.
+    """
+)
+
+if st.button('About the Dataset we have trained'):
+    pass
+
 project_details = """
 The purpose of this project is to design and build a scalable machine learning pipeline
 to predict given consumer complaint will be disputed or not.
@@ -62,7 +72,7 @@ def get_user_inputs():
     example_text = ', '.join(user_inputs)
     return example_text
 
-
+# Creating a function that returns the vectorized text of the input given by user
 def process_example_text(example_text, word2vec_model):
 
     nlp = spacy.blank("en")
@@ -79,36 +89,33 @@ def process_example_text(example_text, word2vec_model):
 def make_prediction(lstm_model, example_vector):
     final_vec = example_vector.reshape((1, example_vector.shape[0], 1))
     prediction = lstm_model.predict(final_vec)[0][0]
-    return "There's a good probability your issue will be disputed." if prediction > 0.5 else "It's quite likely that your issue won't be contested."
+    return "There's a good probability your issue will be disputed." if prediction > 0.5 else "It's quite likely that your issue won't be disputed."
 
 
 # Main code
 def main():
     logging.info("Starting the application...")
     lstm_model, word2vec_model = load_models()
-    st.warning(
-            """
-            We appreciate you utilizing our AI-driven customer dispute system.
-            Please be aware that the information you are giving is genuine and will be utilized to further refine the model.
 
-            """
-        )
     show_details = st.checkbox("Show Details")
+
     if show_details:
         example_text = get_user_inputs()
+        input_values = example_text.split(',')
+        all_fields_filled = all(input_val.strip() != '' for input_val in input_values)
 
-        if st.button('Show Prediction'):
-            if all(input_val == '' for input_val in example_text.split(',')):
-                st.warning("Give input first")
-            else:
+        if show_details:
+            if not all_fields_filled:
+                st.warning("Please fill in all fields before making a prediction.")   
+            elif st.button('Show Prediction'):
                 example_vector = process_example_text(example_text, word2vec_model)
                 prediction = make_prediction(lstm_model, example_vector)
                 with st.spinner('Wait for it...'):
                     time.sleep(2)
-                    #st.success('Done!')
                 st.markdown(f"<h2 style='text-align: center; color: #4B0082;'>Prediction: {prediction}</h2>", unsafe_allow_html=True)
                 logging.info(f"Prediction made: {prediction}")
 
+                # Logging user details
                 logging.info(f"Saving User Details")
 if __name__ == '__main__':
     main()
